@@ -1,0 +1,3 @@
+cactus-compute[train]>=4.0.0
+# NVIDIA CUDA GPU:
+# cactus-compute[train,gpu]>=4.0.0
