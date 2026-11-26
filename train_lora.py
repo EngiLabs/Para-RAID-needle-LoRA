@@ -14,9 +14,12 @@ ADAPTER_PATH = Path("models/spidor_lora.safetensors")
 OUTPUT_CACT = Path("models/spidor_needle3_ru.cact")
 LOCAL_BASE_CACT = Path("checkpoints/needle3.cact")
 
-EPOCHS = 10
+EPOCHS = 12
 BATCH_SIZE = 4
 LEARNING_RATE = "1e-4"
+LORA_RANK = 32
+LORA_ALPHA = 64
+MAX_LEN = 1280
 
 STEP_RE = re.compile(r"\bstep\s+(\d+)/(\d+)\b")
 EPOCH_RE = re.compile(r"\bepoch\s+(\d+)/(\d+)\b")
@@ -44,6 +47,9 @@ finetune_args = cli.parse_args([
     "--epochs", str(EPOCHS),
     "--batch-size", str(BATCH_SIZE),
     "--lr", LEARNING_RATE,
+    "--lora-rank", str(LORA_RANK),
+    "--lora-alpha", str(LORA_ALPHA),
+    "--max-len", str(MAX_LEN),
     "--out", str(ADAPTER_PATH),
 ])
 finetune_args.score = False
