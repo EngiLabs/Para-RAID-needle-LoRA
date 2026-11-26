@@ -16,8 +16,23 @@ SECONDS_PER_90_DEG = 2.0
 
 SPIDOR_TOOLS: list[dict[str, Any]] = [
     {
-        "name": "move_robot",
-        "description": "Move the quadruped robot in a direction, optionally by distance in meters or duration in seconds.",
+        "name": "move",
+        "description": "Start moving the quadruped robot continuously in a direction.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "direction": {
+                    "type": "string",
+                    "enum": ["forward", "backward", "left", "right"],
+                    "description": "Movement direction: forward, backward, left, right",
+                },
+            },
+            "required": ["direction"],
+        },
+    },
+    {
+        "name": "move_distance",
+        "description": "Move the quadruped robot in a direction by a specific distance in meters.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -32,12 +47,37 @@ SPIDOR_TOOLS: list[dict[str, Any]] = [
                     "maximum": 5.0,
                     "description": "Distance to travel in meters",
                 },
+            },
+            "required": ["direction", "distance_m"],
+        },
+    },
+    {
+        "name": "move_duration",
+        "description": "Move the quadruped robot in a direction for a specific duration in seconds.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "direction": {
+                    "type": "string",
+                    "enum": ["forward", "backward", "left", "right"],
+                    "description": "Movement direction: forward, backward, left, right",
+                },
                 "duration_s": {
                     "type": "number",
                     "minimum": 0.1,
                     "maximum": 30.0,
                     "description": "Duration of movement in seconds",
                 },
+            },
+            "required": ["direction", "duration_s"],
+        },
+    },
+    {
+        "name": "set_speed",
+        "description": "Set the persistent movement and rotation speed of the robot (1 slowest to 255 fastest).",
+        "parameters": {
+            "type": "object",
+            "properties": {
                 "speed": {
                     "type": "integer",
                     "minimum": 1,
@@ -45,7 +85,7 @@ SPIDOR_TOOLS: list[dict[str, Any]] = [
                     "description": "Speed from 1 (slowest) to 255 (fastest)",
                 },
             },
-            "required": ["direction"],
+            "required": ["speed"],
         },
     },
     {
@@ -64,12 +104,6 @@ SPIDOR_TOOLS: list[dict[str, Any]] = [
                     "minimum": 5.0,
                     "maximum": 360.0,
                     "description": "Turn angle in degrees",
-                },
-                "speed": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 255,
-                    "description": "Turn speed from 1 to 255",
                 },
             },
             "required": ["direction", "angle_deg"],
@@ -183,27 +217,37 @@ SPIDOR_TOOLS: list[dict[str, Any]] = [
 
 def tool_call_to_raid_command(name: str, args: dict[str, Any]) -> dict[str, Any]:
     """Needle tool call -> payload for /api/command"""
-    if name == "move_robot":
+    if name == "move":
         direction = str(args.get("direction", "forward"))
-        cmd: dict[str, Any] = {"action": direction, "direction": direction}
-        if args.get("distance_m") is not None:
-            cmd["distance_m"] = float(args["distance_m"])
-        if args.get("duration_s") is not None:
-            cmd["duration_s"] = float(args["duration_s"])
-        if args.get("speed") is not None:
-            cmd["speed"] = int(args["speed"])
-        return cmd
+        return {"action": direction, "direction": direction}
+
+    if name == "move_distance":
+        direction = str(args.get("direction", "forward"))
+        return {
+            "action": direction,
+            "direction": direction,
+            "distance_m": float(args["distance_m"]),
+        }
+
+    if name == "move_duration":
+        direction = str(args.get("direction", "forward"))
+        return {
+            "action": direction,
+            "direction": direction,
+            "duration_s": float(args["duration_s"]),
+        }
+
+    if name == "set_speed":
+        return {"action": "set_speed", "speed": int(args["speed"])}
 
     if name == "turn_robot":
         direction = str(args.get("direction", "left"))
         angle = float(args.get("angle_deg", 90.0))
-        speed = int(args.get("speed", 200))
-        duration_s = round((angle / 90.0) * SECONDS_PER_90_DEG * (200.0 / max(50, speed)), 2)
+        duration_s = round((angle / 90.0) * SECONDS_PER_90_DEG, 2)
         return {
             "action": direction,
             "direction": direction,
             "duration_s": duration_s,
-            "speed": speed,
         }
 
     if name == "stop_robot":
