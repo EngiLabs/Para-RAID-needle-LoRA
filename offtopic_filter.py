@@ -46,32 +46,26 @@ def atomic_label_for_row(row: dict[str, Any]) -> tuple[str, list[dict[str, Any]]
 
 
 class OfftopicFilter:
-    """Layer 1: rubert-tiny2 RBF-SVM off-topic filter + atomic intent fast-path."""
-
     def __init__(
         self,
         model_name: str = BASE_MODEL,
         clf_path: Path | str | None = CLF_PATH,
         threshold: float = 0.35,
-        cos_threshold: float = 0.86,
         atomic_threshold: float = 0.58,
     ) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name)
         self.model.eval()
         self.threshold = threshold
-        self.cos_threshold = cos_threshold
         self.atomic_threshold = atomic_threshold
 
         loaded = joblib.load(clf_path) if clf_path and Path(clf_path).exists() else None
         if isinstance(loaded, dict):
             self.binary_clf = loaded.get("binary_clf")
-            self.cmd_vecs = loaded.get("cmd_vecs")
             self.intent_clf = loaded.get("intent_clf")
             self.intent_map: dict[str, list[dict[str, Any]]] = loaded.get("intent_map") or {}
         else:
             self.binary_clf = loaded
-            self.cmd_vecs = None
             self.intent_clf = None
             self.intent_map = {}
 
@@ -95,13 +89,7 @@ class OfftopicFilter:
         if self.binary_clf is None:
             raise RuntimeError("Classifier not loaded; run train_filter.py first.")
         p_cmd = float(self.binary_clf.predict_proba(vec)[0, 1])
-        if p_cmd >= self.threshold:
-            return True, p_cmd
-        if self.cmd_vecs is not None and len(self.cmd_vecs) > 0:
-            max_cos = float((vec @ self.cmd_vecs.T).max())
-            if max_cos >= self.cos_threshold:
-                return True, max(p_cmd, max_cos)
-        return False, p_cmd
+        return p_cmd >= self.threshold, p_cmd
 
     def prob_command(self, query: str) -> float:
         _, p_cmd = self.is_command_vec(self.embed([query]))
