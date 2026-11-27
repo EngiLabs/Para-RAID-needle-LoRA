@@ -4,11 +4,6 @@ __pycache__/
 *.pyc
 *.pyo
 
-data/*.jsonl
-data/*.json
+data/
 checkpoints/
-models/*.cact
-models/*.pkl
-models/*.safetensors
-models/*.json
-reports/
+models/
