@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import joblib
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.svm import SVC
 
 from generate_dataset import _bucket_key
@@ -58,7 +59,10 @@ texts = [r["query"] for r in balanced_rows]
 y_bin = [1 if r.get("answers") else 0 for r in balanced_rows]
 vecs = flt.embed(texts)
 
-binary_clf = SVC(kernel="rbf", C=3.0, gamma="scale", probability=True, class_weight="balanced", random_state=SEED)
+binary_clf = CalibratedClassifierCV(
+    SVC(kernel="rbf", C=3.0, gamma="scale", class_weight="balanced", random_state=SEED),
+    ensemble=False,
+)
 binary_clf.fit(vecs, y_bin)
 
 cmd_indices = [i for i, y in enumerate(y_bin) if y == 1]
@@ -72,13 +76,15 @@ for i in cmd_indices:
     if ans is not None and lbl not in intent_map:
         intent_map[lbl] = ans
 
-intent_clf = SVC(kernel="rbf", C=5.0, gamma="scale", probability=True, class_weight="balanced", random_state=SEED)
+intent_clf = CalibratedClassifierCV(
+    SVC(kernel="rbf", C=5.0, gamma="scale", class_weight="balanced", random_state=SEED),
+    ensemble=False,
+)
 intent_clf.fit(cmd_vecs, intent_labels)
 
 CLF_PATH.parent.mkdir(parents=True, exist_ok=True)
 bundle = {
     "binary_clf": binary_clf,
-    "cmd_vecs": cmd_vecs,
     "intent_clf": intent_clf,
     "intent_map": intent_map,
 }
