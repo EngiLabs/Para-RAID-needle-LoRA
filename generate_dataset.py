@@ -394,12 +394,13 @@ def select_balanced(samples: list[dict[str, Any]], rng: random.Random) -> list[d
     return all_rows
 
 
-rng = random.Random(SEED)
-cmd_rows = select_balanced(build_samples(rng), rng)
-OUT_DIR.mkdir(parents=True, exist_ok=True)
-out_path = OUT_DIR / "cmds.jsonl"
-out_path.write_text(
-    "\n".join(json.dumps(r, ensure_ascii=False) for r in cmd_rows) + "\n",
-    encoding="utf-8",
-)
-print(f"cmds={len(cmd_rows)} -> {out_path}")
+if __name__ == "__main__":
+    rng = random.Random(SEED)
+    cmd_rows = select_balanced(build_samples(rng), rng)
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = OUT_DIR / "cmds.jsonl"
+    out_path.write_text(
+        "\n".join(json.dumps(r, ensure_ascii=False) for r in cmd_rows) + "\n",
+        encoding="utf-8",
+    )
+    print(f"cmds={len(cmd_rows)} -> {out_path}")
