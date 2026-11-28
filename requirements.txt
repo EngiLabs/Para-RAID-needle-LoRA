@@ -1,2 +1,5 @@
 cactus-compute[train]>=4.0.0; sys_platform == "win32"
 cactus-compute[train,gpu]>=4.0.0; sys_platform != "win32"
+transformers
+scikit-learn
+joblib
