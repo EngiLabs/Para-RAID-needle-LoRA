@@ -70,11 +70,12 @@ class OfftopicFilter:
             self.intent_map = {}
 
     def embed(self, texts: list[str], batch_size: int = 128) -> np.ndarray:
+        clean = [str(t).encode("utf-8", "ignore").decode("utf-8").strip() or "-" for t in texts]
         vecs: list[np.ndarray] = []
         with torch.no_grad():
-            for i in range(0, len(texts), batch_size):
+            for i in range(0, len(clean), batch_size):
                 enc = self.tokenizer(
-                    texts[i : i + batch_size],
+                    clean[i : i + batch_size],
                     padding=True,
                     truncation=True,
                     max_length=64,

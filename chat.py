@@ -4,6 +4,11 @@ import json
 import time
 from pathlib import Path
 
+try:
+    import readline  # noqa: F401
+except ImportError:
+    pass
+
 import cactus
 
 from offtopic_filter import CLF_PATH, OfftopicFilter
@@ -20,7 +25,7 @@ print("query (null string to exit):")
 
 while True:
     try:
-        query = input("\n> ").strip()
+        query = input("\n> ").encode("utf-8", "ignore").decode("utf-8").strip()
     except (EOFError, KeyboardInterrupt):
         print()
         break
