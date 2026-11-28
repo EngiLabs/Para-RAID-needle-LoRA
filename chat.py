@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import re
+import sys
 import time
 from pathlib import Path
 
@@ -9,10 +11,23 @@ try:
 except ImportError:
     pass
 
+try:
+    import termios
+
+    if sys.stdin.isatty():
+        _attrs = termios.tcgetattr(sys.stdin.fileno())
+        if hasattr(termios, "IUTF8"):
+            _attrs[0] |= termios.IUTF8
+            termios.tcsetattr(sys.stdin.fileno(), termios.TCSANOW, _attrs)
+except Exception:
+    pass
+
 import cactus
 
 from offtopic_filter import CLF_PATH, OfftopicFilter
 from tools_schema import SPIDOR_TOOLS, tool_call_to_raid_command
+
+ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]|[\x00-\x1f\x7f]")
 
 
 WEIGHTS_PATH = Path("models/spidor_needle3_ru.cact")
@@ -25,7 +40,8 @@ print("query (null string to exit):")
 
 while True:
     try:
-        query = input("\n> ").encode("utf-8", "ignore").decode("utf-8").strip()
+        raw_in = input("\n> ").encode("utf-8", "ignore").decode("utf-8")
+        query = ANSI_ESCAPE_RE.sub("", raw_in).strip()
     except (EOFError, KeyboardInterrupt):
         print()
         break
